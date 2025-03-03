@@ -14,6 +14,28 @@ import bcrypt
 
 ruta = Blueprint('modelo_blueprint', __name__)
 
+@ruta.route('/usuario', methods=['POST'])
+def agregar_usuario():
+    try:
+        data = request.get_json()  # Obtén los datos JSON del request
+        usuario_data = usuario_schema.load(data)  # Deserializa y valida los datos
+
+        # ¡CIFRADO DE CONTRASEÑA (MUY IMPORTANTE)!
+        contrasena_cifrada = bcrypt.hashpw(usuario_data['contrasena'].encode('utf-8'), bcrypt.gensalt())
+        usuario_data['contrasena'] = contrasena_cifrada.decode('utf-8')  # Guarda la versión cifrada
+
+        nuevo_usuario = usuario(**usuario_data)  # Crea el nuevo usuario
+        db.session.add(nuevo_usuario)
+        db.session.commit()
+
+        # Serializa el nuevo usuario usando el esquema antes de enviarlo en la respuesta
+        result = usuario_schema.dump(nuevo_usuario)  # Serializa el objeto usuario
+        return jsonify(result), 201  # 201 Created y JSON serializado
+
+    except Exception as e:
+        db.session.rollback()  # Revierte los cambios en la base de datos
+        return jsonify({'error': str(e)}), 400 
+
 @ruta.route('/usuarios', methods=['GET'])
 def lista_usuarios():
     print("Se ha recibido una petición a /usuarios")  # Mensaje de depuración

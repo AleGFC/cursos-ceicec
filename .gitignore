@@ -7,3 +7,4 @@ __pycache__/
 venv/
 .venv/
 flask/  # Solo si es un entorno virtual o carpeta a ignorar
+myenv/
