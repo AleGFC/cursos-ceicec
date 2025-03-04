@@ -18,12 +18,18 @@ def pago_curso():
         cedula = get_jwt_identity()
         data = request.get_json()
         print("Data recibida:", data)
-        pago_data = CursoUsuarioSchema().load(data) # Corrección: pasa 'data' como argumento
-        pago = cursousuario(cedula=cedula, **pago_data)
-        db.session.add(pago)
+        
+        # Procesar múltiples cursos
+        cursos_ids = data.get('cursos', [])
+        metodo_pago = data.get('metodo_pago', '')
+        referencia = data.get('referencia', '')
+
+        for curso_id in cursos_ids:
+            pago = cursousuario(cedula=cedula, curso_id=curso_id, metodo_pago=metodo_pago, referencia=referencia)
+            db.session.add(pago)
+        
         db.session.commit()
-        result = CursoUsuarioSchema().dump(pago)
-        return jsonify(result), 201
+        return jsonify({'mensaje': 'Pago realizado con éxito'}), 201
     except Exception as e:
         db.session.rollback()
         print("Error en el backend:", str(e))
